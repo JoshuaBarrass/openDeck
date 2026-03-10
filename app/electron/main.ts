@@ -6,7 +6,7 @@ import { loadModules } from "./module-loader"
 let mainWindow: BrowserWindow | null = null
 
 const PORT = 4020
-const isDev = !app.isPackaged
+const isDev = process.env.OPENDECK_DEV === "1"
 
 async function createWindow() {
     mainWindow = new BrowserWindow({
@@ -22,7 +22,7 @@ async function createWindow() {
     if (isDev) {
         mainWindow.loadURL("http://localhost:5173")
     } else {
-        mainWindow.loadFile(path.join(__dirname, "../../renderer/index.html"))
+        mainWindow.loadURL(`http://localhost:${PORT}`)
     }
 
     mainWindow.on("closed", () => {

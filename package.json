@@ -7,10 +7,41 @@
         "build:electron": "tsc -p tsconfig.electron.json",
         "build:renderer": "vite build",
         "build": "npm run build:electron && npm run build:renderer",
+        "dist": "npm run build && electron-builder --win",
         "dev:electron": "tsc -p tsconfig.electron.json --watch",
         "dev:renderer": "vite",
-        "dev": "concurrently \"npm run dev:electron\" \"npm run dev:renderer\" \"wait-on http://localhost:5173 dist/electron/electron/main.js && electron .\"",
+        "dev": "concurrently \"npm run dev:electron\" \"npm run dev:renderer\" \"wait-on http://localhost:5173 dist/electron/electron/main.js && cross-env OPENDECK_DEV=1 electron .\"",
         "start": "electron ."
+    },
+    "build": {
+        "appId": "com.joshuabarrass.opendeck",
+        "productName": "OpenDeck",
+        "directories": {
+            "output": "release"
+        },
+        "files": [
+            "dist/**/*",
+            "modules/**/*",
+            "package.json"
+        ],
+        "extraResources": [
+            {
+                "from": "modules",
+                "to": "modules",
+                "filter": [
+                    "**/*"
+                ]
+            }
+        ],
+        "win": {
+            "target": "nsis",
+            "icon": null
+        },
+        "nsis": {
+            "oneClick": true,
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": false
+        }
     },
     "keywords": [
         "stream-deck",
@@ -26,7 +57,9 @@
         "@types/ws": "^8.5.10",
         "@vitejs/plugin-react": "^4.2.1",
         "concurrently": "^8.2.2",
+        "cross-env": "^10.1.0",
         "electron": "^28.1.4",
+        "electron-builder": "^26.8.1",
         "typescript": "^5.3.3",
         "vite": "^5.0.12",
         "wait-on": "^7.2.0"

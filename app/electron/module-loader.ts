@@ -1,5 +1,6 @@
 import fs from "fs"
 import path from "path"
+import { app } from "electron"
 import { OpenDeckModule, ModuleManifest } from "../shared/types"
 
 export interface RegisteredModule {
@@ -45,7 +46,10 @@ class ModuleRegistry {
 export const moduleRegistry = new ModuleRegistry()
 
 export async function loadModules(): Promise<void> {
-    const modulesDir = path.join(process.cwd(), "modules")
+    const isDev = !app.isPackaged
+    const modulesDir = isDev
+        ? path.join(process.cwd(), "modules")
+        : path.join(process.resourcesPath, "modules")
 
     if (!fs.existsSync(modulesDir)) {
         console.log("No modules directory found, skipping module loading")
