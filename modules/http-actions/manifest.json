@@ -1,0 +1,26 @@
+{
+    "name": "http-actions",
+    "version": "0.1.0",
+    "description": "Send HTTP requests as actions",
+    "actions": [
+        "http.get",
+        "http.post"
+    ],
+    "actionDetails": {
+        "http.get": {
+            "description": "Send an HTTP GET request",
+            "params": {
+                "url": "Target URL",
+                "headers": "Optional headers object"
+            }
+        },
+        "http.post": {
+            "description": "Send an HTTP POST request",
+            "params": {
+                "url": "Target URL",
+                "body": "Request body (string or object)",
+                "headers": "Optional headers object"
+            }
+        }
+    }
+}

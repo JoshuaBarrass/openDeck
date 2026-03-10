@@ -1,0 +1,37 @@
+{
+    "name": "macro",
+    "version": "0.1.0",
+    "description": "System macro actions — keystrokes, hotkeys, text input, and app launching",
+    "actions": [
+        "macro.hotkey",
+        "macro.type",
+        "macro.launch",
+        "macro.keypress"
+    ],
+    "actionDetails": {
+        "macro.hotkey": {
+            "description": "Press a key combination",
+            "params": {
+                "keys": "Key combo string (e.g. ctrl+c, alt+tab, ctrl+shift+s)"
+            }
+        },
+        "macro.keypress": {
+            "description": "Press a single key",
+            "params": {
+                "key": "Key name or character (e.g. enter, escape, a, f5)"
+            }
+        },
+        "macro.type": {
+            "description": "Type a text string via SendKeys",
+            "params": {
+                "text": "Text string to type"
+            }
+        },
+        "macro.launch": {
+            "description": "Launch an application, URL, or file",
+            "params": {
+                "target": "App name, URL (http/https), or file path"
+            }
+        }
+    }
+}

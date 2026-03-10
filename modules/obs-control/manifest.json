@@ -1,0 +1,59 @@
+{
+    "name": "obs-control",
+    "version": "0.2.0",
+    "description": "OBS Studio integration via obs-websocket-js",
+    "actions": [
+        "obs.startStreaming",
+        "obs.stopStreaming",
+        "obs.startRecording",
+        "obs.stopRecording",
+        "obs.toggleRecording",
+        "obs.toggleMute",
+        "obs.setVolume",
+        "obs.switchScene",
+        "obs.toggleSource"
+    ],
+    "actionDetails": {
+        "obs.startStreaming": {
+            "description": "Start streaming"
+        },
+        "obs.stopStreaming": {
+            "description": "Stop streaming"
+        },
+        "obs.startRecording": {
+            "description": "Start recording"
+        },
+        "obs.stopRecording": {
+            "description": "Stop recording"
+        },
+        "obs.toggleRecording": {
+            "description": "Toggle recording on/off"
+        },
+        "obs.toggleMute": {
+            "description": "Toggle mute on an audio source",
+            "params": {
+                "source": "Audio source name (e.g. Mic/Aux, Desktop Audio)"
+            }
+        },
+        "obs.setVolume": {
+            "description": "Set volume level on an audio source",
+            "params": {
+                "source": "Audio source name",
+                "volume": "Volume in dB (e.g. -10, 0) or mul (0.0–1.0 with useMul)"
+            }
+        },
+        "obs.switchScene": {
+            "description": "Switch to a scene",
+            "params": {
+                "scene": "Scene name to switch to"
+            }
+        },
+        "obs.toggleSource": {
+            "description": "Toggle visibility of a source in the current scene",
+            "params": {
+                "scene": "Scene name containing the source",
+                "source": "Source name to toggle"
+            }
+        }
+    }
+}

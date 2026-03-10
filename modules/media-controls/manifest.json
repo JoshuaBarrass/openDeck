@@ -1,0 +1,33 @@
+{
+    "name": "media-controls",
+    "version": "0.1.0",
+    "description": "System media key simulation for OpenDeck",
+    "actions": [
+        "media.playPause",
+        "media.next",
+        "media.previous",
+        "media.volumeUp",
+        "media.volumeDown",
+        "media.mute"
+    ],
+    "actionDetails": {
+        "media.playPause": {
+            "description": "Toggle play/pause"
+        },
+        "media.next": {
+            "description": "Skip to next track"
+        },
+        "media.previous": {
+            "description": "Skip to previous track"
+        },
+        "media.volumeUp": {
+            "description": "Increase system volume"
+        },
+        "media.volumeDown": {
+            "description": "Decrease system volume"
+        },
+        "media.mute": {
+            "description": "Toggle system mute"
+        }
+    }
+}
