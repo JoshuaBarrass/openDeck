@@ -103,6 +103,11 @@ export default function App() {
                         {view === "deck" || !isElectron ? <ControlPage /> : <SettingsPage />}
                     </main>
                     {showConnect && <ConnectModal onClose={() => setShowConnect(false)} />}
+                    <footer className="app-footer">
+                        <a href="https://github.com/JoshuaBarrass/openDeck" target="_blank" rel="noopener noreferrer">
+                            Developed by Joshua Barrass
+                        </a>
+                    </footer>
                 </div>
             </DeckConfigProvider>
         </SocketProvider>
