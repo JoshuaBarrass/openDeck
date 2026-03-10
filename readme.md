@@ -1,6 +1,6 @@
 # OpenDeck
 
-**OpenDeck** is an open-source alternative to hardware stream deck controllers.  
+**OpenDeck** is an open-source alternative to the **Stream Deck**.  
 Instead of dedicated hardware, OpenDeck provides a **web-based control surface** accessible from any device on your local network — iPad, tablet, phone, or any browser.
 
 Built with **Electron**, **React**, **Express**, and **WebSockets**.
