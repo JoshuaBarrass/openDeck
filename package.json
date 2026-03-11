@@ -4,10 +4,11 @@
     "description": "Open-source web-based stream deck alternative",
     "main": "dist/electron/electron/main.js",
     "scripts": {
+        "install:modules": "cd modules/obs-control && npm install --production",
         "build:electron": "tsc -p tsconfig.electron.json",
         "build:renderer": "vite build",
         "build": "npm run build:electron && npm run build:renderer",
-        "dist": "npm run build && electron-builder --win",
+        "dist": "npm run install:modules && npm run build && electron-builder --win",
         "dev:electron": "tsc -p tsconfig.electron.json --watch",
         "dev:renderer": "vite",
         "dev": "concurrently \"npm run dev:electron\" \"npm run dev:renderer\" \"wait-on http://localhost:5173 dist/electron/electron/main.js && cross-env OPENDECK_DEV=1 electron .\"",
