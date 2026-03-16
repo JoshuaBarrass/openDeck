@@ -1,9 +1,10 @@
 {
     "name": "app-launcher",
-    "version": "0.1.0",
-    "description": "Launch applications directly using the path to an executable",
+    "version": "0.2.0",
+    "description": "Launch and close applications directly using the path to an executable",
     "actions": [
-        "app.launch"
+        "app.launch",
+        "app.close"
     ],
     "actionDetails": {
         "app.launch": {
@@ -12,6 +13,13 @@
                 "path": "Absolute path to the .exe file (e.g. C:\\Program Files\\App\\app.exe)",
                 "args": "Optional command-line arguments string",
                 "workingDir": "Optional working directory for the launched process"
+            }
+        },
+        "app.close": {
+            "description": "Close a running application by its process name or executable path",
+            "params": {
+                "name": "Process name without extension (e.g. notepad, chrome) — or provide 'path' instead",
+                "path": "Absolute path to the .exe file; the process name will be derived from the filename"
             }
         }
     }
