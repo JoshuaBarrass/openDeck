@@ -1,10 +1,11 @@
 // App Launcher Module — launch executables directly by file path
-const { exec } = require("child_process")
-const path = require("path")
+const { execSync } = require("child_process")
 
-// Sanitize a string for safe embedding in a PowerShell -Command argument
+// Sanitize a string for safe embedding in a PowerShell single-quoted string.
+// Removes characters dangerous in the outer double-quoted shell layer,
+// and escapes single quotes for the inner PowerShell string layer.
 function sanitize(str) {
-    return str.replace(/["`$]/g, "")
+    return str.replace(/["`$]/g, "").replace(/'/g, "''")
 }
 
 // Validate that the path looks like a valid executable file path
@@ -40,26 +41,17 @@ module.exports = {
                     : ""
 
             // Build PowerShell Start-Process command
-            let ps = `Start-Process -FilePath '${safePath.replace(/'/g, "''")}'`
+            let ps = `Start-Process -FilePath '${safePath}'`
 
             if (args) {
-                ps += ` -ArgumentList '${args.replace(/'/g, "''")}'`
+                ps += ` -ArgumentList '${args}'`
             }
 
             if (workingDir) {
-                ps += ` -WorkingDirectory '${workingDir.replace(/'/g, "''")}'`
+                ps += ` -WorkingDirectory '${workingDir}'`
             }
 
-            exec(
-                `powershell -NoProfile -Command "${ps}"`,
-                { windowsHide: true },
-                (err) => {
-                    if (err) {
-                        console.error(`[App Launcher] Failed to launch: ${exePath}`, err.message)
-                    }
-                }
-            )
-
+            execSync(`powershell -NoProfile -Command "${ps}"`, { windowsHide: true })
             console.log(`[App Launcher] Launched: ${exePath}${args ? " " + args : ""}`)
         },
     },
