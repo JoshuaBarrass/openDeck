@@ -1,0 +1,18 @@
+{
+    "name": "app-launcher",
+    "version": "0.1.0",
+    "description": "Launch applications directly using the path to an executable",
+    "actions": [
+        "app.launch"
+    ],
+    "actionDetails": {
+        "app.launch": {
+            "description": "Launch an executable by its file path",
+            "params": {
+                "path": "Absolute path to the .exe file (e.g. C:\\Program Files\\App\\app.exe)",
+                "args": "Optional command-line arguments string",
+                "workingDir": "Optional working directory for the launched process"
+            }
+        }
+    }
+}
