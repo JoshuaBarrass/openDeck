@@ -1,14 +1,52 @@
 import express from "express"
 import http from "http"
+import https from "https"
 import os from "os"
 import path from "path"
+import fs from "fs"
+import { execFile } from "child_process"
+import { app as electronApp } from "electron"
 import { WebSocketServer, WebSocket } from "ws"
 import { ClientMessage } from "../shared/types"
 import { parseMessage, createServerMessage } from "../shared/action-protocol"
 import { dispatchAction } from "./action-dispatcher"
 import { variableStore } from "./variable-store"
 import { configStore } from "./config-store"
-import { moduleRegistry } from "./module-loader"
+import { moduleRegistry, loadModules } from "./module-loader"
+
+const REGISTRY_URL = "https://raw.githubusercontent.com/JoshuaBarrass/opendeck-plugins/main/registry.json"
+
+function fetchJSON(url: string): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+        https.get(url, { headers: { "User-Agent": "OpenDeck-App" } }, (res) => {
+            if (res.statusCode !== 200) {
+                reject(new Error(`HTTP ${res.statusCode}`))
+                res.resume()
+                return
+            }
+            let data = ""
+            res.on("data", (chunk: string) => { data += chunk })
+            res.on("end", () => {
+                try { resolve(JSON.parse(data)) } catch (e) { reject(e) }
+            })
+        }).on("error", reject)
+    })
+}
+
+function getModulesDir(): string {
+    const isDev = !electronApp.isPackaged
+    return isDev
+        ? path.join(process.cwd(), "modules")
+        : path.join(process.resourcesPath, "modules")
+}
+
+function getInstalledPluginIds(): string[] {
+    const modulesDir = getModulesDir()
+    if (!fs.existsSync(modulesDir)) return []
+    return fs.readdirSync(modulesDir, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => e.name)
+}
 
 let wss: WebSocketServer | null = null
 
@@ -50,11 +88,98 @@ export function startServer(port: number) {
         res.json(modules)
     })
 
+    // API: proxy the community plugin registry (avoids CORS from renderer)
+    expressApp.get("/api/marketplace", async (_req, res) => {
+        try {
+            const data = await fetchJSON(REGISTRY_URL)
+            res.json(data)
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : "Unknown error"
+            res.status(502).json({ error: `Failed to fetch registry: ${msg}` })
+        }
+    })
+
+    // API: report which plugin IDs are already installed
+    expressApp.get("/api/marketplace/installed", (_req, res) => {
+        res.json({ installed: getInstalledPluginIds() })
+    })
+
+    // API: install a plugin via git clone
+    expressApp.use(express.json())
+    expressApp.post("/api/marketplace/install", (req, res) => {
+        const { cloneUrl, pluginId, subdirectory } = req.body as {
+            cloneUrl?: string
+            pluginId?: string
+            subdirectory?: string
+        }
+
+        if (!cloneUrl || !pluginId) {
+            res.status(400).json({ error: "cloneUrl and pluginId are required" })
+            return
+        }
+
+        // Prevent path traversal — pluginId must be a simple directory name
+        if (!/^[a-zA-Z0-9_-]+$/.test(pluginId)) {
+            res.status(400).json({ error: "Invalid pluginId" })
+            return
+        }
+
+        const modulesDir = getModulesDir()
+        const destDir = path.join(modulesDir, pluginId)
+
+        if (fs.existsSync(destDir)) {
+            res.status(409).json({ error: "Plugin already installed" })
+            return
+        }
+
+        if (!fs.existsSync(modulesDir)) {
+            fs.mkdirSync(modulesDir, { recursive: true })
+        }
+
+        if (subdirectory) {
+            // Clone into a temp dir then copy the subdirectory out
+            const tmpDir = path.join(modulesDir, `__tmp_${pluginId}_${Date.now()}`)
+            execFile("git", ["clone", "--depth=1", cloneUrl, tmpDir], (cloneErr) => {
+                if (cloneErr) {
+                    res.status(500).json({ error: `git clone failed: ${cloneErr.message}` })
+                    return
+                }
+                const srcSubdir = path.join(tmpDir, subdirectory)
+                if (!fs.existsSync(srcSubdir)) {
+                    fs.rmSync(tmpDir, { recursive: true, force: true })
+                    res.status(500).json({ error: `Subdirectory '${subdirectory}' not found in repo` })
+                    return
+                }
+                try {
+                    fs.cpSync(srcSubdir, destDir, { recursive: true })
+                } catch (copyErr) {
+                    fs.rmSync(tmpDir, { recursive: true, force: true })
+                    res.status(500).json({ error: `Failed to copy plugin: ${(copyErr as Error).message}` })
+                    return
+                }
+                fs.rmSync(tmpDir, { recursive: true, force: true })
+                loadModules().then(() => {
+                    res.json({ success: true, pluginId })
+                })
+            })
+        } else {
+            execFile("git", ["clone", "--depth=1", cloneUrl, destDir], (cloneErr) => {
+                if (cloneErr) {
+                    res.status(500).json({ error: `git clone failed: ${cloneErr.message}` })
+                    return
+                }
+                loadModules().then(() => {
+                    res.json({ success: true, pluginId })
+                })
+            })
+        }
+    })
+
     // API: get local network addresses for remote connection
     expressApp.get("/api/network", (_req, res) => {
         const interfaces = os.networkInterfaces()
         const addresses: string[] = []
-        for (const [name, iface] of Object.entries(interfaces)) {
+        for (const [, iface] of Object.entries(interfaces)) {
             if (!iface) continue
             for (const info of iface) {
                 if (info.family === "IPv4" && !info.internal) {
@@ -85,6 +210,19 @@ export function startServer(port: number) {
 
     // WebSocket server
     wss = new WebSocketServer({ server })
+
+    // Set up keep-alive interval to send pings to all connected clients
+    // This prevents mobile devices from auto-sleeping and keeps connections alive
+    const keepAliveInterval = setInterval(() => {
+        if (wss) {
+            for (const client of wss.clients) {
+                if (client.readyState === WebSocket.OPEN) {
+                    // Use built-in WebSocket ping
+                    client.ping()
+                }
+            }
+        }
+    }, 30000) // Send ping every 30 seconds
 
     wss.on("connection", (ws) => {
         console.log("Device connected")
@@ -168,6 +306,11 @@ export function startServer(port: number) {
 
     server.listen(port, () => {
         console.log(`OpenDeck server listening on port ${port}`)
+    })
+
+    // Clean up keep-alive interval when server closes
+    server.on("close", () => {
+        clearInterval(keepAliveInterval)
     })
 
     return server

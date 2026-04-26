@@ -1,0 +1,25 @@
+{
+    "name": "app-launcher",
+    "version": "1.0.0",
+    "description": "Launch applications, files, and folders using native file associations",
+    "actions": [
+        "launch.open"
+    ],
+    "actionDetails": {
+        "launch.open": {
+            "description": "Open an application, file, or folder using Windows shell",
+            "params": {
+                "path": {
+                    "type": "file",
+                    "description": "Application or file to open",
+                    "placeholder": "C:\\Program Files\\...",
+                    "required": true,
+                    "filters": [
+                        { "name": "Applications", "extensions": ["exe", "lnk", "bat", "cmd"] },
+                        { "name": "All Files", "extensions": ["*"] }
+                    ]
+                }
+            }
+        }
+    }
+}

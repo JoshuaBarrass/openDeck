@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron"
+import { app, BrowserWindow, ipcMain, dialog } from "electron"
 import path from "path"
 import { startServer } from "./server"
 import { loadModules } from "./module-loader"
@@ -16,6 +16,7 @@ async function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
+            preload: path.join(__dirname, "preload.js"),
         },
     })
 
@@ -29,6 +30,24 @@ async function createWindow() {
         mainWindow = null
     })
 }
+
+ipcMain.handle("dialog:pickFile", async (_event, options: {
+    title?: string
+    filters?: { name: string; extensions: string[] }[]
+    defaultPath?: string
+} = {}) => {
+    if (!mainWindow) return null
+    const result = await dialog.showOpenDialog(mainWindow, {
+        title: options.title ?? "Select a file or application",
+        defaultPath: options.defaultPath ?? "C:\\",
+        filters: options.filters ?? [
+            { name: "Applications", extensions: ["exe", "lnk", "bat", "cmd"] },
+            { name: "All Files", extensions: ["*"] },
+        ],
+        properties: ["openFile"],
+    })
+    return result.canceled ? null : result.filePaths[0]
+})
 
 app.whenReady().then(async () => {
     // Load integration modules

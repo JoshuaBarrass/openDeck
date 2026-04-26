@@ -1,0 +1,76 @@
+{
+    "$schema": "https://raw.githubusercontent.com/JoshuaBarrass/opendeck-plugins/main/schema.json",
+    "version": 1,
+    "plugins": [
+        {
+            "id": "app-launcher",
+            "name": "App Launcher",
+            "description": "Open any application, file, or folder on Windows with a single button press. Supports .exe, .lnk shortcuts, and any file type.",
+            "author": "OpenDeck Team",
+            "version": "1.0.0",
+            "tags": ["launch", "apps", "windows", "files"],
+            "repo": "https://github.com/JoshuaBarrass/openDeck",
+            "cloneUrl": "https://github.com/JoshuaBarrass/openDeck.git",
+            "subdirectory": "modules/app-launcher",
+            "homepage": "https://github.com/JoshuaBarrass/openDeck",
+            "license": "MIT",
+            "bundled": true
+        },
+        {
+            "id": "obs-control",
+            "name": "OBS Control",
+            "description": "Control OBS Studio via WebSocket — start/stop streaming, switch scenes, toggle sources, adjust volume, and more.",
+            "author": "OpenDeck Team",
+            "version": "0.2.0",
+            "tags": ["obs", "streaming", "video"],
+            "repo": "https://github.com/JoshuaBarrass/openDeck",
+            "cloneUrl": "https://github.com/JoshuaBarrass/openDeck.git",
+            "subdirectory": "modules/obs-control",
+            "homepage": "https://github.com/JoshuaBarrass/openDeck",
+            "license": "MIT",
+            "bundled": true
+        },
+        {
+            "id": "http-actions",
+            "name": "HTTP Actions",
+            "description": "Send HTTP GET and POST requests to any URL — great for webhooks, smart home integrations, and REST APIs.",
+            "author": "OpenDeck Team",
+            "version": "0.1.0",
+            "tags": ["http", "webhook", "api", "automation"],
+            "repo": "https://github.com/JoshuaBarrass/openDeck",
+            "cloneUrl": "https://github.com/JoshuaBarrass/openDeck.git",
+            "subdirectory": "modules/http-actions",
+            "homepage": "https://github.com/JoshuaBarrass/openDeck",
+            "license": "MIT",
+            "bundled": true
+        },
+        {
+            "id": "macro",
+            "name": "Macro",
+            "description": "Simulate keyboard shortcuts, type text, launch applications, and open URLs on Windows.",
+            "author": "OpenDeck Team",
+            "version": "0.1.0",
+            "tags": ["keyboard", "macro", "hotkey", "windows"],
+            "repo": "https://github.com/JoshuaBarrass/openDeck",
+            "cloneUrl": "https://github.com/JoshuaBarrass/openDeck.git",
+            "subdirectory": "modules/macro",
+            "homepage": "https://github.com/JoshuaBarrass/openDeck",
+            "license": "MIT",
+            "bundled": true
+        },
+        {
+            "id": "media-controls",
+            "name": "Media Controls",
+            "description": "Control media playback on Windows — play/pause, next/previous track, volume up/down, and mute.",
+            "author": "OpenDeck Team",
+            "version": "0.1.0",
+            "tags": ["media", "audio", "windows"],
+            "repo": "https://github.com/JoshuaBarrass/openDeck",
+            "cloneUrl": "https://github.com/JoshuaBarrass/openDeck.git",
+            "subdirectory": "modules/media-controls",
+            "homepage": "https://github.com/JoshuaBarrass/openDeck",
+            "license": "MIT",
+            "bundled": true
+        }
+    ]
+}

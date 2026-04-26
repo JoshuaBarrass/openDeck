@@ -1,5 +1,20 @@
 import React, { useRef, useState } from "react"
 import type { DeckButton, IconType } from "../../shared/types"
+import { useActionLookup } from "../hooks/useModules"
+import ActionPicker from "./ActionPicker"
+import PayloadForm from "./PayloadForm"
+
+declare global {
+    interface Window {
+        electronAPI?: {
+            pickFile: (options?: {
+                title?: string
+                filters?: { name: string; extensions: string[] }[]
+                defaultPath?: string
+            }) => Promise<string | null>
+        }
+    }
+}
 
 interface ButtonEditorProps {
     button: DeckButton
@@ -11,11 +26,24 @@ const MAX_IMAGE_SIZE = 50 * 1024 * 1024 // 50MB after base64
 export default function ButtonEditor({ button, onChange }: ButtonEditorProps) {
     const fileRef = useRef<HTMLInputElement>(null)
     const iconType: IconType = button.iconType || "emoji"
+    const [advanced, setAdvanced] = useState(false)
     const [payloadError, setPayloadError] = useState("")
+
+    const lookup = useActionLookup(button.action)
+
+    const handleActionChange = (actionId: string) => {
+        // Auto-fill label with action description if blank
+        const detail = lookup?.detail
+        if (!button.label && detail?.description) {
+            onChange({ action: actionId, label: detail.description })
+        } else {
+            onChange({ action: actionId })
+        }
+    }
 
     const payloadStr = button.payload ? JSON.stringify(button.payload, null, 2) : ""
 
-    const handlePayloadChange = (raw: string) => {
+    const handlePayloadJsonChange = (raw: string) => {
         if (!raw.trim()) {
             setPayloadError("")
             onChange({ payload: undefined })
@@ -37,7 +65,6 @@ export default function ButtonEditor({ button, onChange }: ButtonEditorProps) {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
-
         if (!file.type.startsWith("image/")) return
 
         const reader = new FileReader()
@@ -63,6 +90,7 @@ export default function ButtonEditor({ button, onChange }: ButtonEditorProps) {
 
     return (
         <div className="button-editor">
+            {/* Label */}
             <label className="button-editor-field">
                 <span>Label</span>
                 <input
@@ -73,21 +101,18 @@ export default function ButtonEditor({ button, onChange }: ButtonEditorProps) {
                 />
             </label>
 
+            {/* Icon Type */}
             <div className="button-editor-field">
                 <span>Icon Type</span>
                 <div className="button-editor-toggle">
                     <button
                         className={`toggle-btn ${iconType === "emoji" ? "active" : ""}`}
                         onClick={() => handleIconTypeChange("emoji")}
-                    >
-                        Emoji
-                    </button>
+                    >Emoji</button>
                     <button
                         className={`toggle-btn ${iconType === "image" ? "active" : ""}`}
                         onClick={() => handleIconTypeChange("image")}
-                    >
-                        Image
-                    </button>
+                    >Image</button>
                 </div>
             </div>
 
@@ -144,9 +169,7 @@ export default function ButtonEditor({ button, onChange }: ButtonEditorProps) {
                             <button
                                 className={`toggle-btn ${button.fillImage ? "active" : ""}`}
                                 onClick={() => onChange({ fillImage: !button.fillImage })}
-                            >
-                                {button.fillImage ? "On" : "Off"}
-                            </button>
+                            >{button.fillImage ? "On" : "Off"}</button>
                         </div>
                     </div>
                     <div className="button-editor-field">
@@ -155,36 +178,53 @@ export default function ButtonEditor({ button, onChange }: ButtonEditorProps) {
                             <button
                                 className={`toggle-btn ${button.hideLabel ? "active" : ""}`}
                                 onClick={() => onChange({ hideLabel: !button.hideLabel })}
-                            >
-                                {button.hideLabel ? "On" : "Off"}
-                            </button>
+                            >{button.hideLabel ? "On" : "Off"}</button>
                         </div>
                     </div>
                 </>
             )}
 
-            <label className="button-editor-field">
+            {/* Action picker */}
+            <div className="button-editor-field">
                 <span>Action</span>
-                <input
-                    className="settings-input"
-                    value={button.action}
-                    onChange={e => onChange({ action: e.target.value })}
-                    placeholder="e.g. obs.startStreaming"
-                />
-            </label>
+                <ActionPicker value={button.action} onChange={handleActionChange} />
+            </div>
 
-            <label className="button-editor-field">
-                <span>Payload (JSON)</span>
-                <textarea
-                    className="settings-input payload-input"
-                    defaultValue={payloadStr}
-                    onBlur={e => handlePayloadChange(e.target.value)}
-                    placeholder={'e.g. { "scene": "Camera 1", "url": "https://..." }'}
-                    rows={3}
-                    spellCheck={false}
-                />
-                {payloadError && <span className="payload-error">{payloadError}</span>}
-            </label>
+            {/* Auto-generated payload form */}
+            {button.action && (
+                <div className="button-editor-field">
+                    <div className="button-editor-payload-header">
+                        <span>Parameters</span>
+                        <button
+                            type="button"
+                            className="button-editor-advanced-toggle"
+                            onClick={() => setAdvanced(a => !a)}
+                            title="Toggle raw JSON editor"
+                        >
+                            {advanced ? "← Form view" : "Edit JSON"}
+                        </button>
+                    </div>
+                    {advanced ? (
+                        <>
+                            <textarea
+                                className="settings-input payload-input"
+                                defaultValue={payloadStr}
+                                onBlur={e => handlePayloadJsonChange(e.target.value)}
+                                placeholder={'{ "key": "value" }'}
+                                rows={4}
+                                spellCheck={false}
+                            />
+                            {payloadError && <span className="payload-error">{payloadError}</span>}
+                        </>
+                    ) : (
+                        <PayloadForm
+                            detail={lookup?.detail}
+                            payload={button.payload}
+                            onChange={p => onChange({ payload: p })}
+                        />
+                    )}
+                </div>
+            )}
         </div>
     )
 }

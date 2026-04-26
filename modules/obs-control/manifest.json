@@ -32,27 +32,63 @@
         "obs.toggleMute": {
             "description": "Toggle mute on an audio source",
             "params": {
-                "source": "Audio source name (e.g. Mic/Aux, Desktop Audio)"
+                "source": {
+                    "type": "string",
+                    "description": "Audio source name",
+                    "placeholder": "Mic/Aux",
+                    "required": true
+                }
             }
         },
         "obs.setVolume": {
-            "description": "Set volume level on an audio source",
+            "description": "Set volume on an audio source",
             "params": {
-                "source": "Audio source name",
-                "volume": "Volume in dB (e.g. -10, 0) or mul (0.0–1.0 with useMul)"
+                "source": {
+                    "type": "string",
+                    "description": "Audio source name",
+                    "placeholder": "Mic/Aux",
+                    "required": true
+                },
+                "volume": {
+                    "type": "number",
+                    "description": "Volume in dB (or 0.0–1.0 if useMul is on)",
+                    "placeholder": "-10",
+                    "step": 0.1,
+                    "required": true
+                },
+                "useMul": {
+                    "type": "boolean",
+                    "description": "Treat volume as 0.0–1.0 multiplier instead of dB",
+                    "default": false
+                }
             }
         },
         "obs.switchScene": {
             "description": "Switch to a scene",
             "params": {
-                "scene": "Scene name to switch to"
+                "scene": {
+                    "type": "string",
+                    "description": "Scene name",
+                    "placeholder": "Main Camera",
+                    "required": true
+                }
             }
         },
         "obs.toggleSource": {
-            "description": "Toggle visibility of a source in the current scene",
+            "description": "Toggle visibility of a source in a scene",
             "params": {
-                "scene": "Scene name containing the source",
-                "source": "Source name to toggle"
+                "scene": {
+                    "type": "string",
+                    "description": "Scene name containing the source",
+                    "placeholder": "Main Camera",
+                    "required": true
+                },
+                "source": {
+                    "type": "string",
+                    "description": "Source name to toggle",
+                    "placeholder": "Webcam",
+                    "required": true
+                }
             }
         }
     }

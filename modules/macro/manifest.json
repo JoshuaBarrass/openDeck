@@ -12,25 +12,46 @@
         "macro.hotkey": {
             "description": "Press a key combination",
             "params": {
-                "keys": "Key combo string (e.g. ctrl+c, alt+tab, ctrl+shift+s)"
+                "keys": {
+                    "type": "string",
+                    "description": "Key combo (separated by +)",
+                    "placeholder": "ctrl+shift+s",
+                    "required": true
+                }
             }
         },
         "macro.keypress": {
             "description": "Press a single key",
             "params": {
-                "key": "Key name or character (e.g. enter, escape, a, f5)"
+                "key": {
+                    "type": "string",
+                    "description": "Key name or character",
+                    "placeholder": "enter, escape, f5, a",
+                    "required": true
+                }
             }
         },
         "macro.type": {
             "description": "Type a text string via SendKeys",
             "params": {
-                "text": "Text string to type"
+                "text": {
+                    "type": "textarea",
+                    "description": "Text to type",
+                    "placeholder": "Hello world",
+                    "rows": 3,
+                    "required": true
+                }
             }
         },
         "macro.launch": {
-            "description": "Launch an application, URL, or file",
+            "description": "Launch an app, URL, or file",
             "params": {
-                "target": "App name, URL (http/https), or file path"
+                "target": {
+                    "type": "string",
+                    "description": "App name, URL, or file path",
+                    "placeholder": "notepad, https://github.com, C:\\file.txt",
+                    "required": true
+                }
             }
         }
     }

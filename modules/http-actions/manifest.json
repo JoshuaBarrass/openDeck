@@ -10,16 +10,41 @@
         "http.get": {
             "description": "Send an HTTP GET request",
             "params": {
-                "url": "Target URL",
-                "headers": "Optional headers object"
+                "url": {
+                    "type": "string",
+                    "description": "Target URL",
+                    "placeholder": "https://example.com/api",
+                    "required": true
+                },
+                "headers": {
+                    "type": "textarea",
+                    "description": "Optional headers (JSON object)",
+                    "placeholder": "{\"Authorization\": \"Bearer ...\"}",
+                    "rows": 3
+                }
             }
         },
         "http.post": {
             "description": "Send an HTTP POST request",
             "params": {
-                "url": "Target URL",
-                "body": "Request body (string or object)",
-                "headers": "Optional headers object"
+                "url": {
+                    "type": "string",
+                    "description": "Target URL",
+                    "placeholder": "https://example.com/api",
+                    "required": true
+                },
+                "body": {
+                    "type": "textarea",
+                    "description": "Request body (string or JSON)",
+                    "placeholder": "{\"key\": \"value\"}",
+                    "rows": 4
+                },
+                "headers": {
+                    "type": "textarea",
+                    "description": "Optional headers (JSON object)",
+                    "placeholder": "{\"Content-Type\": \"application/json\"}",
+                    "rows": 3
+                }
             }
         }
     }

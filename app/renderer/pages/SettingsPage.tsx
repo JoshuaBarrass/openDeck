@@ -1,21 +1,21 @@
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef } from "react"
 import { useDeckConfig } from "../hooks/useDeckConfig"
+import { useModules } from "../hooks/useModules"
 import ButtonEditor from "../components/ButtonEditor"
-
-interface ActionDetail {
-    description: string
-    params?: Record<string, string>
-}
-
-interface ModuleInfo {
-    name: string
-    version: string
-    description?: string
-    actions: string[]
-    actionDetails: Record<string, ActionDetail>
-}
+import PreviewGrid from "../components/PreviewGrid"
+import type { ParamDefinition } from "../../shared/types"
 
 type SettingsTab = "config" | "actions"
+
+function paramDescription(def: ParamDefinition): string {
+    if (typeof def === "string") return def
+    return def.description || ""
+}
+
+function paramTypeLabel(def: ParamDefinition): string {
+    if (typeof def === "string") return "string"
+    return def.type
+}
 
 export default function SettingsPage() {
     const {
@@ -39,12 +39,11 @@ export default function SettingsPage() {
     } = useDeckConfig()
 
     const displayImageRef = useRef<HTMLInputElement>(null)
+    const { modules, loading: modulesLoading } = useModules()
 
     const [activeTab, setActiveTab] = useState<SettingsTab>("config")
-    const [modules, setModules] = useState<ModuleInfo[]>([])
-    const [modulesLoading, setModulesLoading] = useState(false)
     const [newPageName, setNewPageName] = useState("")
-    const [editingButton, setEditingButton] = useState<number | null>(null)
+    const [selectedButton, setSelectedButton] = useState<number | null>(null)
     const [renamingPage, setRenamingPage] = useState<number | null>(null)
     const [renameValue, setRenameValue] = useState("")
     const [newVarKey, setNewVarKey] = useState("")
@@ -52,18 +51,8 @@ export default function SettingsPage() {
     const [newVarDesc, setNewVarDesc] = useState("")
 
     const currentPage = pages[currentPageIndex]
-
-    useEffect(() => {
-        if (activeTab === "actions" && modules.length === 0 && !modulesLoading) {
-            setModulesLoading(true)
-            const port = 4020
-            fetch(`http://${window.location.hostname}:${port}/api/modules`)
-                .then(res => res.json())
-                .then((data: ModuleInfo[]) => setModules(data))
-                .catch(err => console.error("Failed to load modules:", err))
-                .finally(() => setModulesLoading(false))
-        }
-    }, [activeTab])
+    const selectedSlot =
+        selectedButton !== null ? currentPage.grid[selectedButton] : undefined
 
     const handleAddPage = () => {
         const name = newPageName.trim()
@@ -84,8 +73,21 @@ export default function SettingsPage() {
         setRenamingPage(null)
     }
 
+    const handleSelectButton = (index: number) => {
+        setSelectedButton(index)
+        // If the slot is empty, create a new button there
+        if (!currentPage.grid[index]) {
+            addButton(currentPageIndex)
+        }
+    }
+
+    const handlePageSelect = (index: number) => {
+        setCurrentPageIndex(index)
+        setSelectedButton(null)
+    }
+
     return (
-        <div className="settings-page">
+        <div className={`settings-page ${activeTab === "config" ? "with-inspector" : ""}`}>
             {/* Tab Bar */}
             <div className="settings-tabs">
                 <button
@@ -101,7 +103,7 @@ export default function SettingsPage() {
             {activeTab === "actions" && (
                 <section className="settings-section">
                     <h2>Available Actions</h2>
-                    <p className="settings-hint">All actions registered by loaded modules. Use the Action ID in your button config.</p>
+                    <p className="settings-hint">All actions registered by loaded modules.</p>
                     {modulesLoading && <p className="settings-hint">Loading…</p>}
                     {modules.map(mod => (
                         <div key={mod.name} className="actions-module">
@@ -112,7 +114,7 @@ export default function SettingsPage() {
                             {mod.description && <p className="actions-module-desc">{mod.description}</p>}
                             <div className="actions-list">
                                 {mod.actions.map(actionId => {
-                                    const detail = mod.actionDetails[actionId]
+                                    const detail = mod.actionDetails?.[actionId]
                                     return (
                                         <div key={actionId} className="actions-item">
                                             <div className="actions-item-header">
@@ -123,10 +125,11 @@ export default function SettingsPage() {
                                             </div>
                                             {detail?.params && Object.keys(detail.params).length > 0 && (
                                                 <div className="actions-params">
-                                                    {Object.entries(detail.params).map(([param, desc]) => (
+                                                    {Object.entries(detail.params).map(([param, def]) => (
                                                         <div key={param} className="actions-param-row">
                                                             <code className="actions-param-name">{param}</code>
-                                                            <span className="actions-param-desc">{desc}</span>
+                                                            <span className="actions-param-type">{paramTypeLabel(def)}</span>
+                                                            <span className="actions-param-desc">{paramDescription(def)}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -142,7 +145,115 @@ export default function SettingsPage() {
 
             {activeTab === "config" && (
                 <>
-                    {/* Page Management */}
+                    {/* Two-column workspace: deck preview (left) + inspector (right) */}
+                    <div className="settings-workspace">
+                        {/* Left: Deck preview */}
+                        <div className="settings-canvas">
+                            <div className="settings-canvas-header">
+                                <h2>{currentPage.name}</h2>
+                                <span className="settings-canvas-hint">
+                                    Click a button to edit
+                                </span>
+                            </div>
+                            <div className="sd-device settings-canvas-device">
+                                <div className="sd-device-frame">
+                                    {displayImage && (
+                                        <img className="sd-display-image" src={displayImage} alt="" draggable={false} />
+                                    )}
+                                    <PreviewGrid
+                                        buttons={currentPage.grid}
+                                        columns={5}
+                                        rows={3}
+                                        selectedIndex={selectedButton}
+                                        onSelect={handleSelectButton}
+                                    />
+                                </div>
+                            </div>
+                            <nav className="sd-page-bar settings-canvas-pagebar">
+                                {pages.map((page, index) => (
+                                    <button
+                                        key={page.name + index}
+                                        className={`sd-page-tab ${index === currentPageIndex ? "active" : ""}`}
+                                        onClick={() => handlePageSelect(index)}
+                                    >
+                                        {page.name}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+
+                        {/* Right: Inspector */}
+                        <aside className="settings-inspector">
+                            {selectedButton === null || !selectedSlot ? (
+                                <div className="settings-inspector-empty">
+                                    <div className="settings-inspector-empty-icon">⊕</div>
+                                    <p>Select a button to edit its action and appearance.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="settings-inspector-header">
+                                        <div className="settings-inspector-title">
+                                            <span className="settings-inspector-eyebrow">
+                                                Slot {selectedButton + 1}
+                                            </span>
+                                            <h3>{selectedSlot.label || "Untitled button"}</h3>
+                                        </div>
+                                        <button
+                                            className="settings-btn icon"
+                                            onClick={() => setSelectedButton(null)}
+                                            title="Close"
+                                        >✕</button>
+                                    </div>
+
+                                    <div className="settings-inspector-toolbar">
+                                        <button
+                                            className="settings-btn icon small"
+                                            onClick={() => {
+                                                const newIndex = Math.max(0, selectedButton - 1)
+                                                moveButton(currentPageIndex, selectedButton, newIndex)
+                                                setSelectedButton(newIndex)
+                                            }}
+                                            disabled={selectedButton === 0}
+                                            title="Move left"
+                                        >◀</button>
+                                        <button
+                                            className="settings-btn icon small"
+                                            onClick={() => {
+                                                const newIndex = Math.min(currentPage.grid.length - 1, selectedButton + 1)
+                                                moveButton(currentPageIndex, selectedButton, newIndex)
+                                                setSelectedButton(newIndex)
+                                            }}
+                                            disabled={selectedButton === currentPage.grid.length - 1}
+                                            title="Move right"
+                                        >▶</button>
+                                        <button
+                                            className={`settings-btn icon small ${!(selectedSlot as any).disabled ? "active" : ""}`}
+                                            onClick={() => toggleButton(currentPageIndex, selectedButton)}
+                                            title={!(selectedSlot as any).disabled ? "Disable" : "Enable"}
+                                        >{!(selectedSlot as any).disabled ? "👁️" : "🚫"}</button>
+                                        <div className="settings-inspector-toolbar-spacer" />
+                                        <button
+                                            className="settings-btn icon small danger"
+                                            onClick={() => {
+                                                removeButton(currentPageIndex, selectedButton)
+                                                setSelectedButton(null)
+                                            }}
+                                            title="Remove button"
+                                        >🗑️</button>
+                                    </div>
+
+                                    <div className="settings-inspector-body">
+                                        <ButtonEditor
+                                            button={selectedSlot}
+                                            onChange={updates => updateButton(currentPageIndex, selectedButton, updates)}
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </aside>
+                    </div>
+
+                    {/* Pages */}
                     <section className="settings-section">
                         <h2>Pages</h2>
                         <div className="settings-page-list">
@@ -166,7 +277,7 @@ export default function SettingsPage() {
                                         <>
                                             <span
                                                 className="settings-page-name"
-                                                onClick={() => setCurrentPageIndex(index)}
+                                                onClick={() => handlePageSelect(index)}
                                             >
                                                 {page.name}
                                             </span>
@@ -191,64 +302,6 @@ export default function SettingsPage() {
                             />
                             <button className="settings-btn" onClick={handleAddPage}>Add Page</button>
                         </div>
-                    </section>
-
-                    {/* Button Management */}
-                    <section className="settings-section">
-                        <h2>Buttons — {currentPage.name}</h2>
-                        <div className="settings-button-grid">
-                            {currentPage.grid.map((button, index) => (
-                                <div
-                                    key={button.id}
-                                    className={`settings-button-card ${!(button as any).disabled ? "" : "disabled"} ${editingButton === index ? "editing" : ""}`}
-                                >
-                                    <div className="settings-button-preview" onClick={() => setEditingButton(editingButton === index ? null : index)}>
-                                        {button.icon && (button.iconType === "image" || button.icon.startsWith("data:image/") || button.icon.startsWith("http")) ? (
-                                            <img className="settings-button-img" src={button.icon} alt={button.label} />
-                                        ) : (
-                                            <span className="settings-button-icon">{button.icon || "—"}</span>
-                                        )}
-                                        <span className="settings-button-name">{button.label || `Slot ${index + 1}`}</span>
-                                    </div>
-                                    <div className="settings-button-toolbar">
-                                        <button
-                                            className="settings-btn icon small"
-                                            onClick={() => moveButton(currentPageIndex, index, Math.max(0, index - 1))}
-                                            disabled={index === 0}
-                                            title="Move left"
-                                        >◀</button>
-                                        <button
-                                            className="settings-btn icon small"
-                                            onClick={() => moveButton(currentPageIndex, index, Math.min(currentPage.grid.length - 1, index + 1))}
-                                            disabled={index === currentPage.grid.length - 1}
-                                            title="Move right"
-                                        >▶</button>
-                                        <button
-                                            className={`settings-btn icon small ${!(button as any).disabled ? "active" : ""}`}
-                                            onClick={() => toggleButton(currentPageIndex, index)}
-                                            title={!(button as any).disabled ? "Disable" : "Enable"}
-                                        >{!(button as any).disabled ? "👁️" : "🚫"}</button>
-                                        <button
-                                            className="settings-btn icon small danger"
-                                            onClick={() => {
-                                                if (editingButton === index) setEditingButton(null)
-                                                removeButton(currentPageIndex, index)
-                                            }}
-                                            title="Remove"
-                                        >✕</button>
-                                    </div>
-                                    {editingButton === index && (
-                                        <ButtonEditor
-                                            button={button}
-                                            onChange={(updates) => updateButton(currentPageIndex, index, updates)}
-                                        />
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <button className="settings-btn" onClick={() => addButton(currentPageIndex)}>
-                            + Add Button
-                        </button>
                     </section>
 
                     {/* Variables */}

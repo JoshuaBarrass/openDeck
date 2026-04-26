@@ -2,10 +2,12 @@ import React, { useState, useEffect, useCallback } from "react"
 import { QRCodeSVG } from "qrcode.react"
 import { SocketProvider } from "./hooks/useSocket"
 import { DeckConfigProvider } from "./hooks/useDeckConfig"
+import { ModulesProvider } from "./hooks/useModules"
 import ControlPage from "./pages/ControlPage"
 import SettingsPage from "./pages/SettingsPage"
+import MarketplacePage from "./pages/MarketplacePage"
 
-type View = "deck" | "settings"
+type View = "deck" | "settings" | "marketplace"
 
 const isElectron = navigator.userAgent.includes("Electron")
 
@@ -72,6 +74,7 @@ export default function App() {
     return (
         <SocketProvider>
             <DeckConfigProvider>
+                <ModulesProvider>
                 <div className="app">
                     <header className={`app-header${isElectron ? "" : " app-header-remote"}`}>
                         <h1>OpenDeck</h1>
@@ -91,6 +94,12 @@ export default function App() {
                                     Deck
                                 </button>
                                 <button
+                                    className={`app-nav-btn ${view === "marketplace" ? "active" : ""}`}
+                                    onClick={() => setView("marketplace")}
+                                >
+                                    Plugins
+                                </button>
+                                <button
                                     className={`app-nav-btn ${view === "settings" ? "active" : ""}`}
                                     onClick={() => setView("settings")}
                                 >
@@ -100,7 +109,9 @@ export default function App() {
                         )}
                     </header>
                     <main>
-                        {view === "deck" || !isElectron ? <ControlPage /> : <SettingsPage />}
+                        {(!isElectron || view === "deck") && <ControlPage />}
+                        {isElectron && view === "marketplace" && <MarketplacePage />}
+                        {isElectron && view === "settings" && <SettingsPage />}
                     </main>
                     {showConnect && <ConnectModal onClose={() => setShowConnect(false)} />}
                     <footer className="app-footer">
@@ -109,6 +120,7 @@ export default function App() {
                         </a>
                     </footer>
                 </div>
+                </ModulesProvider>
             </DeckConfigProvider>
         </SocketProvider>
     )

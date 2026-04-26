@@ -1,0 +1,78 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "OpenDeck Plugin Registry",
+    "type": "object",
+    "required": ["version", "plugins"],
+    "properties": {
+        "version": {
+            "type": "integer",
+            "description": "Registry schema version"
+        },
+        "plugins": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/Plugin"
+            }
+        }
+    },
+    "definitions": {
+        "Plugin": {
+            "type": "object",
+            "required": ["id", "name", "description", "author", "version", "repo", "cloneUrl"],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique plugin identifier, must match the folder name placed in /modules/"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable plugin name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Short description of what the plugin does"
+                },
+                "author": {
+                    "type": "string",
+                    "description": "Author name or GitHub username"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Semantic version string (e.g. 1.0.0)"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Tags for filtering (e.g. obs, media, keyboard)"
+                },
+                "repo": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to the repository homepage"
+                },
+                "cloneUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Git clone URL (https://... .git)"
+                },
+                "subdirectory": {
+                    "type": "string",
+                    "description": "If the plugin is not at the repo root, the path within the repo to the plugin folder"
+                },
+                "homepage": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Optional homepage or documentation URL"
+                },
+                "license": {
+                    "type": "string",
+                    "description": "SPDX license identifier (e.g. MIT)"
+                },
+                "bundled": {
+                    "type": "boolean",
+                    "description": "True if this plugin ships with OpenDeck by default"
+                }
+            }
+        }
+    }
+}
